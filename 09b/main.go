@@ -41,7 +41,7 @@ func main() {
 	sum := 0
 
 	diskMap := []int{}
-    blockLengths := make(map[int]int)
+	blockLengths := make(map[int]int)
 	runningId := 0
 	free := false
 
@@ -64,63 +64,63 @@ func main() {
 				diskMap = append(diskMap, id)
 			}
 			if !free {
-                blockLengths[runningId] = number
+				blockLengths[runningId] = number
 				runningId += 1
 			}
 			free = !free
 		}
 	}
 
-    for i:=len(diskMap)-1;i>=0;i-- {
-        if diskMap[i] == -1 {
-            continue
-        }
-        blockLength := blockLengths[diskMap[i]]
-        blockStart := i - blockLength + 1
-        if diskMap[blockStart] != diskMap[i] {
-            fmt.Printf("Error on an invariant: %v %v %v %v %d\n", blockStart, diskMap[blockStart], i, diskMap[i], blockLength)
-            os.Exit(1)
-        }
-        
-        // Search for empty space in front
-        for j:=0;j<blockStart;j++{
-            if diskMap[j] != -1 {
-                continue
-            }
-            // We found an empty space
-            // Check if enough space
-            emptyStart := j
-            emptyEnd := j
-            for k:=j+1;k<blockStart;k++{
-                if diskMap[k] != -1 {
-                    emptyEnd = k-1
-                    break
-                }
-            }
-            emptyLength := emptyEnd - emptyStart + 1
+	for i := len(diskMap) - 1; i >= 0; i-- {
+		if diskMap[i] == -1 {
+			continue
+		}
+		blockLength := blockLengths[diskMap[i]]
+		blockStart := i - blockLength + 1
+		if diskMap[blockStart] != diskMap[i] {
+			fmt.Printf("Error on an invariant: %v %v %v %v %d\n", blockStart, diskMap[blockStart], i, diskMap[i], blockLength)
+			os.Exit(1)
+		}
 
-            // We have enough space
-            if emptyLength >= blockLength {
-                // Place the block
-                for l:=0;l<blockLength;l++{
-                    diskMap[emptyStart+l] = diskMap[i]
-                    diskMap[blockStart+l] = -1
-                }
-                break
-            } 
+		// Search for empty space in front
+		for j := 0; j < blockStart; j++ {
+			if diskMap[j] != -1 {
+				continue
+			}
+			// We found an empty space
+			// Check if enough space
+			emptyStart := j
+			emptyEnd := j
+			for k := j + 1; k < blockStart; k++ {
+				if diskMap[k] != -1 {
+					emptyEnd = k - 1
+					break
+				}
+			}
+			emptyLength := emptyEnd - emptyStart + 1
 
-            // We dont have enough space
-            // Continue at the next block
-            j = emptyEnd
-        }
-        i=blockStart
-    }
-    fmt.Printf("%v\n", diskMap)
+			// We have enough space
+			if emptyLength >= blockLength {
+				// Place the block
+				for l := 0; l < blockLength; l++ {
+					diskMap[emptyStart+l] = diskMap[i]
+					diskMap[blockStart+l] = -1
+				}
+				break
+			}
+
+			// We dont have enough space
+			// Continue at the next block
+			j = emptyEnd
+		}
+		i = blockStart
+	}
+	fmt.Printf("%v\n", diskMap)
 	for i, val := range diskMap {
 		if val >= 0 {
-            result := i * val
+			result := i * val
 			sum += result
-            //fmt.Printf("%d * %d = %d -> sum=%d\n", i, val, result, sum)
+			//fmt.Printf("%d * %d = %d -> sum=%d\n", i, val, result, sum)
 		}
 	}
 

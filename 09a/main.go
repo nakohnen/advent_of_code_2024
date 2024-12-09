@@ -71,9 +71,9 @@ func main() {
 
 	lastEndPosition := len(diskMap) - 1
 	for i := 0; i < len(diskMap); i++ {
-        if lastEndPosition < i {
-            break
-        }
+		if lastEndPosition < i {
+			break
+		}
 		if diskMap[i] >= 0 {
 			continue
 		}
@@ -95,9 +95,9 @@ func main() {
 
 	for i, val := range diskMap {
 		if val >= 0 {
-            result := i * val
+			result := i * val
 			sum += result
-            fmt.Printf("%d * %d = %d -> sum=%s\n", i, val, result, sum)
+			fmt.Printf("%d * %d = %d -> sum=%s\n", i, val, result, sum)
 		}
 	}
 
