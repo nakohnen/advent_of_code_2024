@@ -4,19 +4,20 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-    "sync"
+    //"sync"
+    //"strings"
+    //"strconv"
 )
 
 func main() {
 	// Check if enough arguments are provided
-	if len(os.Args) != 3 {
-		fmt.Println("Usage: go run script.go <input_file> <output_file>")
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: go run main.go <input_file>")
 		os.Exit(1)
 	}
 
 	// Parse command-line arguments
 	inputFile := os.Args[1]
-	outputFile := os.Args[2]
 
 	// Open the input file
 	inFile, err := os.Open(inputFile)
@@ -26,17 +27,8 @@ func main() {
 	}
 	defer inFile.Close()
 
-	// Create the output file
-	outFile, err := os.Create(outputFile)
-	if err != nil {
-		fmt.Printf("Error creating output file: %v\n", err)
-		os.Exit(1)
-	}
-	defer outFile.Close()
-
 	// Prepare for line-by-line reading and writing
 	scanner := bufio.NewScanner(inFile)
-	writer := bufio.NewWriter(outFile)
 
 	sum := 0
 
@@ -46,27 +38,12 @@ func main() {
 
 	}
    
-	// Write the result to the output file
-	output_string := fmt.Sprintf(" -> Sum: %d\n", sum)
-	fmt.Println(output_string)
+	fmt.Printf(" -> Sum: %d\n", sum)
 
-	_, err3 := writer.WriteString(output_string)
-	if err3 != nil {
-		fmt.Printf("Error writing to output file: %v\n", err3)
-		os.Exit(1)
-	}
-
-	if err4 := scanner.Err(); err4 != nil {
-		fmt.Printf("Error reading input file: %v\n", err4)
-		os.Exit(1)
-	}
-
-	// Flush remaining data to the output file
-	err5 := writer.Flush()
-	if err5 != nil {
-		fmt.Printf("Error flushing output file: %v\n", err5)
-		os.Exit(1)
-	}
+    if err4 := scanner.Err(); err4 != nil {
+        fmt.Printf("Error reading input file: %v\n", err4)
+        os.Exit(1)
+    }
 
 	fmt.Println("Processing complete!")
 }
