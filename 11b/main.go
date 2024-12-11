@@ -4,10 +4,19 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	//"sync"
 	"strconv"
 	"strings"
-	"sync"
 )
+
+func addToHashMap(hashmap map[int]int, loc, val int) bool {
+    if old, found := hashmap[loc]; found {
+        hashmap[loc] = old + val // Consistently use 'hashmap'
+        return false
+    }
+    hashmap[loc] = val
+    return true
+}
 
 func main() {
 	// Check if enough arguments are provided
@@ -48,100 +57,50 @@ func main() {
 		}
 	}
 
-    cache := make(map[int][]int)
-	var rwMutex sync.RWMutex
+    fmt.Printf("Stones: %v\n", stones)
 
-	fmt.Printf("Stones: %v\n", stones)
-	for i := 0; i < 75; i++ {
-		// Worker function closure
-		worker := func(id int, jobs <-chan int, results chan<- []int, wg *sync.WaitGroup, cache map[int][]int, rwMutex *sync.RWMutex) {
-			defer wg.Done()
+    stonesHM := make(map[int]int)
+    for _, stone := range stones {
+        addToHashMap(stonesHM, stone, 1)
+    }
 
-			for stone := range jobs {
-                rwMutex.RLock()
-                if cached, found := cache[stone]; found {
+    for j := 0; j < 75; j++ {
+        newHM := make(map[int]int)
+        
+        for stone, count := range stonesHM {
+            if stone == 0 {
+                addToHashMap(newHM, 1, count)
+                continue
+            }
 
-                    newStones := []int{}
-                    newStones = append(newStones, cached...)
-                    rwMutex.RUnlock()
-                    results <- newStones
-                    continue
+            digits := fmt.Sprintf("%d", stone)
+            if len(digits)%2 == 0 {
+                val1, err := strconv.Atoi(digits[:len(digits)/2])
+                if err != nil {
+                    fmt.Printf("Error converting number %s\n", digits)
+                    os.Exit(1)
                 }
-                rwMutex.RUnlock()
+                val2, err := strconv.Atoi(digits[len(digits)/2:])
+                if err != nil {
+                    fmt.Printf("Error converting number %s\n", digits)
+                    os.Exit(1)
+                }
 
-				newStones := []int{}
-				finished := false
-				if stone == 0 {
-					newStones = append(newStones, 1)
-					finished = true
-				}
-				digits := fmt.Sprintf("%d", stone)
-				if len(digits)%2 == 0 && !finished {
-					val1, err := strconv.Atoi(digits[:len(digits)/2])
-					if err != nil {
-						fmt.Printf("Error converting number %s\n", digits)
-						os.Exit(1)
-					}
-					val2, err := strconv.Atoi(digits[len(digits)/2:])
-					if err != nil {
-						fmt.Printf("Error converting number %s\n", digits)
-						os.Exit(1)
-						os.Exit(1)
-					}
-					newStones = append(newStones, val1)
-					newStones = append(newStones, val2)
-					finished = true
-				}
-				if !finished {
-					newStones = append(newStones, stone*2024)
-				}
+                addToHashMap(newHM, val1, count)
+                addToHashMap(newHM, val2, count)
+                continue
+            }
 
-                rwMutex.Lock()
-                cache[stone] = newStones
-                rwMutex.Unlock()
+            addToHashMap(newHM, stone * 2024, count)
+        }
 
-				results <- append([]int(nil), newStones...)
-			}
-		}
+        stonesHM = newHM
+    }
 
-		// Inputs and setup
-		jobs := make(chan int, len(stones))
-		results := make(chan []int, len(stones))
-		var wg sync.WaitGroup
+    for _, count := range stonesHM {
+        sum += count
+    }
 
-		// Start workers
-		numWorkers := 14
-		for i := 1; i <= numWorkers; i++ {
-			wg.Add(1)
-			go worker(i, jobs, results, &wg, cache, &rwMutex)
-		}
-
-		// Send jobs
-		for _, input := range stones {
-			jobs <- input
-		}
-		close(jobs)
-
-		// Wait and collect results
-		wg.Wait()
-		close(results)
-
-		newStones := []int{}
-		for result := range results {
-			for _, newStone := range result {
-				newStones = append(newStones, newStone)
-			}
-		}
-		stones = newStones
-		if len(stones) < 22 {
-			fmt.Printf("%d - Stones: %v\n", i, stones)
-		} else {
-
-			fmt.Printf("%d - Stones count: %v\n", i, len(stones))
-		}
-	}
-
-	sum = len(stones)
 
 	fmt.Printf(" -> Sum: %d\n", sum)
 
