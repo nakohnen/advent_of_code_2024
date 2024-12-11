@@ -1,0 +1,28 @@
+Stones: [125 17]
+Stones: [253000 1 7]
+Stones: [253 0 2024 14168]
+Stones: [512072 1 20 24 28676032]
+Stones: [512 72 2024 2 0 2 4 2867 6032]
+Stones: [1036288 7 2 20 24 4048 1 4048 8096 28 67 60 32]
+Stones count: 22
+Stones count: 31
+Stones count: 42
+Stones count: 68
+Stones count: 109
+Stones count: 170
+Stones count: 235
+Stones count: 342
+Stones count: 557
+Stones count: 853
+Stones count: 1298
+Stones count: 1951
+Stones count: 2869
+Stones count: 4490
+Stones count: 6837
+Stones count: 10362
+Stones count: 15754
+Stones count: 23435
+Stones count: 36359
+Stones count: 55312
+ -> Sum: 55312
+Processing complete!
