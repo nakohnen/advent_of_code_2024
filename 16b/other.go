@@ -314,43 +314,45 @@ func main() {
 
 	// Search the path
     gScore, finalScore := search(adjMap, start, end, 0)
+    gScoreInverse, finalScoreInverse1 := search(adjMap, path{end,South}, start.p, 0)
 
     visited := NewPointSet()
 
     fmt.Printf("Score: %v\n", finalScore)
+    fmt.Printf("Score: %v\n", finalScoreInverse1)
 
-    {
-        toWork := []path{start}
+    for x:=0;x<maxWidth;x++ {
+        for y:=0;y<maxHeight;y++{
+            p := point{x, y}
+            if !tilemap[p] {
+                continue
+            }
+            found := false
+            outer:
+            for d:=0;d<4;d++{
+                dir := Direction(d)
 
-        for len(toWork) > 0 {
-            current := toWork[0]
-            toWork = toWork[1:]
-            visited.Add(current.p)
-            
-            fmt.Printf("Current %v with toWork %v\n", current, len(toWork))
-
-			// Movements
-            p := current.p
-			pU := path{point{p.x, p.y - 1}, North}
-			pD := path{point{p.x, p.y + 1}, South}
-			pL := path{point{p.x - 1, p.y}, West}
-			pR := path{point{p.x + 1, p.y}, East}
-
-			adj := []path{pU, pD, pL, pR}
-
-            for _, pa := range adj {
-                if gScore[pa] > finalScore || !tilemap[pa.p] || visited.Contains(pa.p) {
-                    continue
+                for d2:=0;d2<4;d2++{
+                    dir2 := Direction(d2)
+                    if gScore[path{p, dir}] + gScoreInverse[path{p, dir2}] == finalScore{
+                        visited.Add(p)
+                        found = true
+                    } else if gScore[path{p, dir2}] + gScoreInverse[path{p, dir}] == finalScore {
+                        visited.Add(p)
+                        found = true
+                    }
+                    if found {
+                        break outer
+                    }
                 }
-                _, score := search(adjMap, pa, end, gScore[pa])
-                if score == finalScore {
-                    toWork = append(toWork, pa)
+                if found {
+                    break outer
                 }
 
             }
-
         }
     }
+
     sum += visited.Size()
     printMap(tilemap, maxWidth, maxHeight, visited, start.p, end)
 
