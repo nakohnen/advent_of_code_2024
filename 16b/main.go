@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	//"sync"
+    "sync"
 	//"strings"
 	//"strconv"
 	"sort"
@@ -138,7 +138,7 @@ func MinSlice(slice []int) int {
 	return m
 }
 
-func search(adjMap map[path]map[path]int, start path, end point, startVal int) map[path]int, int {
+func search(adjMap map[path]map[path]int, start path, end point, startVal int) (map[path]int, int) {
 	openSet := []path{start}
 	gScore := make(map[path]int)
 	gScore[start] = startVal
@@ -316,92 +316,73 @@ func main() {
 	}
 
 	// Search the path
-    gScore:= search(adjMap, start, end)
+    gScore, finalScore := search(adjMap, start, end, 0)
 
     visited := NewPointSet()
-    visited.Add(start.p)
 
-    endsTemp := []path{}
-    smallestPathDistance := int(^uint(0) >> 1)
-    for d := 0; d < 4; d++ {
-        pa := path{end, Direction(d)}
-        if _, exists := gScore[pa]; exists {
-            endsTemp = append(endsTemp, pa)
-            if gScore[pa] < smallestPathDistance {
-                smallestPathDistance = gScore[pa]
+    fmt.Printf("Score: %v\n", finalScore)
+
+	// Worker function closure that uses `multiplier`
+	worker := func(id int, jobs <-chan point, results chan<- int, wg *sync.WaitGroup) {
+		defer wg.Done()
+
+		for job := range jobs {
+            if !tilemap[job] {
+                results <- 0
+                continue
             }
-        }
-    }
-    toWork := []path{}
-    for _, pa := range endsTemp {
-        if gScore[pa] == smallestPathDistance {
-            toWork = append(toWork, pa)
-        }
-    }
-    fmt.Printf("Reversing from end: %v\n", toWork)
-    for len(toWork) > 0 {
-        current := toWork[0]
-        toWork = toWork[1:]
+            res := 0
+            for d:=0;d<4;d++{
+                dir := Direction(d)
+                pa := path{job, dir}
+                _, score := search(adjMap, pa, end, gScore[pa])
 
-        visited.Add(current.p)
-
-        if current == start {
-            continue
-        }
-
-        // Movements
-        p := current.p
-        pU := path{point{p.x, p.y + 1}, North}
-        pD := path{point{p.x, p.y - 1}, South}
-        pL := path{point{p.x + 1, p.y}, West}
-        pR := path{point{p.x - 1, p.y}, East}
-
-
-        adjTemp := []path{pU, pD, pL, pR}
-        toRemove := []int{}
-        pInterest1 := point{4, 7}
-        pInterest2 := point{5, 7}
-        pInterest3 := point{5, 8}
-        for i, pa := range adjTemp {
-            if pa.p == pInterest1 || pa.p == pInterest2 || pa.p == pInterest3 {
-                fmt.Printf("%v := %v\n", pa, gScore[pa])
-            }
-            if pa.p.x < 0 || pa.p.x >= maxWidth || pa.p.y < 0 || pa.p.y >= maxHeight || !tilemap[pa.p] {
-                toRemove = append(toRemove, i)
-            }
-        }
-        adj := []path{}
-        for i, pa := range adjTemp {
-            found := false 
-            for _, j := range toRemove {
-                if i == j {
-                    found = true
+                //fmt.Printf("Path; %v Score: %v gScore[pa]=%v\n", pa, score, gScore[pa])
+                if score == finalScore {
+                    res += 1
+                } else if score - finalScore >= 3000 {
                     break
                 }
             }
-            if !found {
-                adj = append(adj, pa)
+            result := 0
+            if res > 0 {
+                result = 1
             }
-        }
-        sd := int(^uint(0) >> 1)
-        for _, pa := range adj {
-            if gScore[pa] < sd {
-                sd = gScore[pa]
-            }
-        }
-        for _, pa := range adj {
-            if gScore[pa] == sd  {
-                if !visited.Contains(pa.p) {
-                    toWork = append(toWork, pa)
-                }
-            }
-        }
-        fmt.Printf("ToWork: %v\n", len(toWork))
-    }
-    
-    printMap(tilemap, maxWidth, maxHeight, visited, start.p, end)
+            // fmt.Printf("Worker %d processed job: %d -> %d\n", id, job, res)
+			results <- result
+		}
+	}
 
-    sum =  visited.Size()
+	// Inputs and setup
+	jobs := make(chan point, maxWidth * maxHeight)
+	results := make(chan int, maxWidth * maxHeight)
+	var wg sync.WaitGroup
+
+	// Start workers
+	numWorkers := 14
+	for i := 1; i <= numWorkers; i++ {
+		wg.Add(1)
+		go worker(i, jobs, results, &wg)
+	}
+
+	// Send jobs
+    
+    for x:=0;x<maxWidth;x++{
+       for y:=0;y<maxHeight;y++{
+           jobs <- point{x,y}
+       }
+       fmt.Printf("Column completed %s.\n", x)
+    }
+	close(jobs)
+
+	// Wait and collect results
+	wg.Wait()
+	close(results)
+
+	for result := range results {
+		sum += result
+	}
+    printMap(tilemap, maxWidth, maxHeight, visited, start.p, end)
 
 	fmt.Printf(" -> Sum: %d\n", sum)
 
