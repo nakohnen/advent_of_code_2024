@@ -251,7 +251,7 @@ func main() {
 	var wg sync.WaitGroup
 
 	// Start workers
-	numWorkers := 14
+	numWorkers := 24
 	for i := 1; i <= numWorkers; i++ {
 		wg.Add(1)
 		go worker(i, jobs, results, &wg)
