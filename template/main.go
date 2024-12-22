@@ -6,8 +6,17 @@ import (
 	"os"
     //"sync"
     //"strings"
-    //"strconv"
+    "strconv"
 )
+
+func readInt(s string) int {
+	val, err := strconv.Atoi(s)
+	if err != nil {
+		//fmt.Printf("Error converting str %s to int\n", s)
+		os.Exit(1)
+	}
+	return val
+}
 
 func main() {
 	// Check if enough arguments are provided
