@@ -22,6 +22,47 @@ type point struct {
     x, y int
 }
 
+
+// StringSet type using map[string]struct{}
+type StringSet struct {
+	m map[string]struct{}
+}
+
+// NewStringSet creates a new set
+func NewStringSet() *StringSet {
+	return &StringSet{m: make(map[string]struct{})}
+}
+
+// Add adds an element to the set
+func (s *StringSet) Add(value string) {
+	s.m[value] = struct{}{}
+}
+
+// Contains checks if an element is in the set
+func (s *StringSet) Contains(value string) bool {
+	_, exists := s.m[value]
+	return exists
+}
+
+// Remove removes an element from the set
+func (s *StringSet) Remove(value string) {
+	delete(s.m, value)
+}
+
+// Size returns the number of elements in the set
+func (s *StringSet) Size() int {
+	return len(s.m)
+}
+
+// GetElements retrieves all elements in the set
+func (s *StringSet) GetElements() []string {
+	elements := []string{}
+	for p := range s.m {
+		elements = append(elements, p)
+	}
+	return elements
+}
+
 // GeneratePermutations generates all permutations of the input slice of runes
 func GeneratePermutations(input []rune) [][]rune {
 	var result [][]rune
@@ -58,6 +99,41 @@ func abs(n int) int {
     return -n
 }
 
+// ManhattanDistance calculates the Manhattan distance between two points
+func ManhattanDistance(p1, p2 point) int {
+	return abs(p1.x-p2.x) + abs(p1.y-p2.y)
+}
+
+/**func getPriority(line string, inverse map[string]point, leadingChar string) int {
+    newLine := leadingChar + line
+    total := 0
+    for i:=0;i<len(newLine)-1;i++{
+        p1 := inverse[string(newLine[i])]
+        p2 := inverse[string(newLine[i+1])]
+        total += ManhattanDistance(p1, p2)
+    }
+    return len(line) + total
+}**/
+
+func getPriority(line string, inverse map[string]point, leadingChar string) int {
+    if len(line) == 0 {
+        return 0
+    } else if len(line) == 1 {
+        switch line {
+        case "<":
+            return 0
+        case "v":
+            return 1
+        case ">":
+            return 2
+        case "^":
+            return 3
+        case "A":
+            return 4
+        }
+    } 
+    return 10 * getPriority(string(line[:len(line)-1]), inverse, leadingChar) + getPriority(string(line[len(line)-1]), inverse, leadingChar)
+}
 
 func getPermutations(start, end, invalid point) []string {
     leftRight := end.x - start.x
@@ -119,18 +195,103 @@ func getPermutations(start, end, invalid point) []string {
     return validPerms
 }
 
-func decode(text string, decoder map[string]map[string][]string) []string {
+// Priority map for characters
+var priorityMap = map[rune]int{
+	'<': 1,
+	'v': 2,
+	'^': 3,
+	'>': 4,
+	'A': 5,
+}
+
+// CompareStrings compares two strings based on their priority
+// with a preference for directly repeating characters.
+func CompareStrings(s1, s2 string) int {
+	// Preference for direct repetitions: Count consecutive repeating characters
+	reps1 := countDirectRepetitions(s1)
+	reps2 := countDirectRepetitions(s2)
+	if reps1 != reps2 {
+		return reps2 - reps1 // Prefer the string with more direct repetitions
+	}
+
+	// General case: Compare character by character based on priority
+	runes1 := []rune(s1)
+	runes2 := []rune(s2)
+
+	for i := 0; i < len(runes1) && i < len(runes2); i++ {
+		priority1 := priorityMap[runes1[i]]
+		priority2 := priorityMap[runes2[i]]
+
+		if priority1 != priority2 {
+			return priority1 - priority2 // Negative if s1 < s2, positive if s1 > s2
+		}
+	}
+
+	// If strings are identical up to the shortest length, return 0 (equal preference)
+	return 0
+}
+
+// countDirectRepetitions counts the number of directly repeating characters in the string
+func countDirectRepetitions(s string) int {
+	count := 0
+	runes := []rune(s)
+
+	// Check each pair of adjacent characters
+	for i := 0; i < len(runes)-1; i++ {
+		if runes[i] == runes[i+1] {
+			count++
+		}
+	}
+
+	return count
+}
+
+// SortStrings sorts a slice of strings based on the priority and repetition preference
+func SortStrings(strings []string) {
+	sort.Slice(strings, func(i, j int) bool {
+		return CompareStrings(strings[i], strings[j]) < 0
+	})
+}
+
+
+/**func filter(perms []string, inverseMap map[string]point, leadingChar string) []string {
+    if len(perms) == 0 {
+        return perms
+    }
+
+    newPerms := []string{}
+
+    minPrio := getPriority(perms[0], inverseMap, leadingChar)
+    for _, other := range perms {
+        prio := getPriority(other, inverseMap, leadingChar)
+        if prio < minPrio {
+            minPrio = prio
+        }
+    }
+
+    for _, other := range perms {
+
+        prio := getPriority(other, inverseMap, leadingChar)
+        if prio == minPrio {
+            newPerms = append(newPerms, other)
+        }
+    }
+    return newPerms
+}**/
+
+
+func decode(text string, decoder map[string]map[string][]string, inverse map[string]point) []string {
     currentLetter := "A"
     possibilities := []string{}
     for _, r := range text {
         letter := string(r)
         newPoss := decoder[currentLetter][letter]
         if len(possibilities) == 0 {
-            possibilities = newPoss
+            possibilities = filter(newPoss, inverse, "A")
         } else {
             toReplace := []string{}
             for _, perm := range possibilities {
-                for _, perm2 := range newPoss {
+                for _, perm2 := range filter(newPoss, inverse, string(perm[len(perm)-1])) {
                     newPerm := perm + perm2
                     toReplace = append(toReplace, newPerm) 
                 }
@@ -153,11 +314,11 @@ func decodeToLen(text string, decoder map[string]map[string]int) int {
     return minLen
 }
 
-func solve(line string, keypad, dpad map[string]map[string][]string) int {
-    ways := decode(line, keypad)
+func solve(line string, keypad, dpad map[string]map[string][]string, inverse map[string]point) int {
+    ways := decode(line, keypad, inverse)
     newWays := []string{}
     for _, way := range ways {
-        newWays = append(newWays, decode(way, dpad)...)
+        newWays = append(newWays, decode(way, dpad, inverse)...)
     }
 
     minLen := len(newWays[0])
@@ -170,8 +331,8 @@ func solve(line string, keypad, dpad map[string]map[string][]string) int {
     return minLen * readInt(line[:len(line)-1])
 }
 
-func solve2(line string, keypad map[string]map[string][]string, lenDPad map[string]map[string]int) int {
-    ways := decode(line, keypad)
+func solve2(line string, keypad map[string]map[string][]string, lenDPad map[string]map[string]int, inverse map[string]point) int {
+    ways := decode(line, keypad, inverse)
     
     waysLen := []int{}
     for _, perm := range ways {
@@ -250,7 +411,7 @@ func main() {
             } else {
                 start := layoutKPInverse[letter]
                 end := layoutKPInverse[other]
-                keypad[letter][other] = getPermutations(start, end, invalidKey)
+                keypad[letter][other] = filter(getPermutations(start, end, invalidKey), layoutKPInverse, "A")
             }
         }
     }
@@ -292,7 +453,7 @@ func main() {
             } else {
                 start := layoutDPInverse[letter]
                 end := layoutDPInverse[other]
-                perms := getPermutations(start, end, invalidKey)
+                perms := filter(getPermutations(start, end, invalidKey), layoutDPInverse, "A")
                 dpad[letter][other] = perms
                 multiLevelDPad[letter][other] = append([]string(nil), perms...) 
             }
@@ -305,40 +466,63 @@ func main() {
     }
     fmt.Println("Dpad:")
     for key, val := range dpad {
-        fmt.Printf("%v -> %v\n", key, val)
+        for key2, val2 := range val {
+            fmt.Printf("%v -> %v : %v\n", key, key2, val2)
+        }
     }
     
     // Multi Level DPad transformation
-    for i:=1;i<25;i++{
-        fmt.Printf("Dpad level %d\n", i + 1)
+    transform := func(dpadValues []string, dpad, multiLevelDPad map[string]map[string][]string, inverse map[string]point) {
         for _, letter := range dpadValues {
             for _, other := range dpadValues {
-                fmt.Printf("%d: %v to %v -> ", i + 1, letter, other)
-                newPerms := []string{}
+                fmt.Printf("%v to %v -> \n", letter, other)
+                newPermsSet := NewStringSet()
                 for _, currentPerm := range multiLevelDPad[letter][other] {
-                    newPerms = append(newPerms, decode(currentPerm, dpad)...)
+                    for _, newPerm := range decode(currentPerm, dpad, layoutDPInverse) {
+                        newPermsSet.Add(newPerm)
+                        fmt.Printf("\t%v to %v\n", currentPerm, len(newPerm))
+                    }
                 }
+                fmt.Printf("New perms size: %d\n", newPermsSet.Size())
+                newPerms := newPermsSet.GetElements()
+                minPrio := getPriority(newPerms[0], layoutDPInverse, "A")
                 minLen := len(newPerms[0])
                 for _, perm := range newPerms {
-                    if len(perm) < minLen {
-                        minLen = len(perm)
+                    prio := getPriority(perm, layoutDPInverse, "A")
+                    length := len(perm)
+                    if prio < minPrio {
+                        minPrio = prio
+                    }
+                    if length < minLen {
+                        minLen = length
                     }
                 }
                 newPerms2 := []string{}
                 for _, perm := range newPerms {
-                    if len(perm) == minLen {
+                    prio := getPriority(perm, layoutDPInverse, "A")
+                    if prio == minPrio {
                         newPerms2 = append(newPerms2, perm)
+                        } else {
+                            fmt.Printf("Out: %v %v -> %v\n", letter, other, perm)
                     }
                 }
-                lenDPad[letter][other] = minLen
-                multiLevelDPad[letter][other] = newPerms2
+                multiLevelDPad[letter][other] = newPerms2[:1]
                 fmt.Printf("%d perms with minLen %d\n", len(newPerms2), minLen)
             }
         }
+        for key, val := range multiLevelDPad {
+            if len(val) <= 20 {
+                for key2, val2 := range val {
+                    fmt.Printf("%v -> %v : %v\n", key, key2, val2)
+                }
+            }
+        }
+        fmt.Println("")
     }
-    fmt.Println("Multi level dpad done")
-
-
+    for i:=1;i<25;i++{
+        // transform := func(dpadValues []string, dpad, multiLevelDPad map[string]map[string][]string, inverse map[string]point) {
+        transform(dpadValues, dpad, multiLevelDPad, layoutDPInverse)
+    }
 
     // Prepare for line-by-line reading and writing
     scanner := bufio.NewScanner(inFile)
@@ -356,7 +540,7 @@ func main() {
 		defer wg.Done()
 
 		for job := range jobs {
-			result := solve2(job, keypad, lenDPad)
+			result := solve(job, keypad, multiLevelDPad, layoutDPInverse)
 			fmt.Printf("Worker %d processed job: %s -> %d\n", id, job, result)
 			results <- result
 		}
