@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-    "sync"
 )
 
 type point struct {
@@ -146,7 +145,7 @@ func abs(n int) int {
 }
 
 
-func search(tilemapOrig map[point]bool, maxWidth, maxHeight int, start, end point, skip skip) int {
+func search(tilemapOrig map[point]bool, maxWidth, maxHeight int, start, end point, skip skip, getPath bool) (int, []point, map[point]int) {
     tilemap := make(map[point]bool)
     for key, val := range tilemapOrig {
         tilemap[key] = val
@@ -155,15 +154,17 @@ func search(tilemapOrig map[point]bool, maxWidth, maxHeight int, start, end poin
     skipStart := skip.p1
     skipEnd := skip.p2
 
-    minX := Min(skipStart.x, skipEnd.x)
-    maxX := Max(skipStart.x, skipEnd.x)
-    minY := Min(skipStart.y, skipEnd.y)
-    maxY := Max(skipStart.y, skipEnd.y)
-    
-    for x:=minX;x<=maxX;x++{
-        for y:=minY;y<=maxY;y++{
-            skip := point{x, y}
-            tilemap[skip] = true
+    if skipStart != skipEnd {
+        minX := Min(skipStart.x, skipEnd.x)
+        maxX := Max(skipStart.x, skipEnd.x)
+        minY := Min(skipStart.y, skipEnd.y)
+        maxY := Max(skipStart.y, skipEnd.y)
+
+        for x:=minX;x<=maxX;x++{
+            for y:=minY;y<=maxY;y++{
+                skip := point{x, y}
+                tilemap[skip] = true
+            }
         }
     }
 
@@ -197,6 +198,7 @@ func search(tilemapOrig map[point]bool, maxWidth, maxHeight int, start, end poin
 	openList := []point{start}
 	gScore := make(map[point]int)
 	gScore[start] = 0
+    cameFrom := make(map[point]point)
 
     visited := NewPointSet()
 
@@ -213,10 +215,12 @@ func search(tilemapOrig map[point]bool, maxWidth, maxHeight int, start, end poin
 				if gCost, exists := gScore[other]; exists {
 					if newDistance < gCost {
 						gScore[other] = newDistance
+                        cameFrom[other] = current
 						openList = append(openList, other)
 					}
 				} else {
 					gScore[other] = newDistance
+                    cameFrom[other] = current
 					openList = append(openList, other)
 				}
 			}
@@ -224,7 +228,19 @@ func search(tilemapOrig map[point]bool, maxWidth, maxHeight int, start, end poin
 		sortInPlace(openList, gScore)
 	}
 
-    return gScore[end]
+    if !getPath {
+        return gScore[end], []point{}, gScore
+    }
+    
+    fullPath := NewPointSet()
+    fullPath.Add(end)
+    current := end
+    for current != start {
+        current = cameFrom[current]
+        fullPath.Add(current)
+    }
+    return gScore[end], fullPath.GetElements(), gScore
+
 }
 
 func printMap(tilemap map[point]bool, maxWidth, maxHeight int, visited *PointSet, start, end point) {
@@ -279,8 +295,6 @@ func main() {
 	// Prepare for line-by-line reading and writing
 	scanner := bufio.NewScanner(inFile)
 
-	sum := 0
-
 	var start point
 	var end point
 
@@ -330,65 +344,31 @@ func main() {
             path.Add(p)
         }
     }
+    // Search the path
+    finalScore, _, gScores  := search(tilemap, maxWidth, maxHeight, start, end, skip{start, start}, false)
+
+    fmt.Printf("Score: %v\n", finalScore)
+    fmt.Printf("Length of all paths: %d\n", path.Size())
+
     pathSlice := path.GetElements()
     for i:=0;i<len(pathSlice);i++ {
         for j:=i+1;j<len(pathSlice);j++{
             p1 := pathSlice[i]
             p2 := pathSlice[j]
-            if ManhattanDistance(p1, p2) <= 70 {
-                skips.Add(skip{p1, p2})
+            manhattan := ManhattanDistance(p1, p2) 
+            saving := abs(gScores[p1] - gScores[p2]) - manhattan
+            if manhattan <= 20 && saving >= 100 {
+                fmt.Printf("From %v to %v we take %v and save %v\n", p1, p2, manhattan, saving) 
+                if gScores[p1] > gScores[p2] {
+                    skips.Add(skip{p1, p2})
+                } else {
+                    skips.Add(skip{p2, p1})
+                }
             }
         }
     }
 
-
-
-	// Search the path
-    finalScore := search(tilemap, maxWidth, maxHeight, start, end, skip{start, start})
-    fmt.Printf("Score: %v\n", finalScore)
-    //fmt.Printf("Checking skips %v\n", skips)
-
-    worker := func(id int, jobs <-chan skip, results chan<- int, wg *sync.WaitGroup) {
-        defer wg.Done()
-
-        for job := range jobs {
-            result := search(tilemap, maxWidth, maxHeight, start, end, job)
-            fmt.Printf("Worker %d processed job: %d -> %d\n", id, job, result)
-            results <- result
-        }
-    }
-
-	// Inputs and setup
-	jobs := make(chan skip, skips.Size())
-	results := make(chan int, skips.Size())
-	var wg sync.WaitGroup
-
-	// Start workers
-	numWorkers := 14
-	for i := 1; i <= numWorkers; i++ {
-		wg.Add(1)
-		go worker(i, jobs, results, &wg)
-	}
-
-	// Send jobs
-	for _, input := range skips.GetElements()  {
-		jobs <- input
-	}
-	close(jobs)
-
-	// Wait and collect results
-	wg.Wait()
-	close(results)
-
-	for score := range results {
-        scoreDelta := finalScore - score 
-        //fmt.Printf("Skipping at %v => %d (d=%d)\n", s, score, scoreDelta)
-        if scoreDelta >= 100 {
-            sum += 1
-        }
-	}
-
-	fmt.Printf(" -> Sum: %d\n", sum)
+	fmt.Printf(" -> Sum: %d\n", skips.Size())
 
 	if err4 := scanner.Err(); err4 != nil {
 		fmt.Printf("Error reading input file: %v\n", err4)
