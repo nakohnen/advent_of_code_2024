@@ -1,0 +1,99 @@
+Keypad:
+4 -> map[0:[>vvA v>vA] 1:[vA] 2:[>vA v>A] 3:[>>vA >v>A v>>A] 4:[A] 5:[>A] 6:[>>A] 7:[^A] 8:[>^A ^>A] 9:[>>^A >^>A ^>>A] A:[>>vvA >v>vA >vv>A v>>vA v>v>A]]
+5 -> map[0:[vvA] 1:[<vA v<A] 2:[vA] 3:[>vA v>A] 4:[<A] 5:[A] 6:[>A] 7:[<^A ^<A] 8:[^A] 9:[>^A ^>A] A:[>vvA v>vA vv>A]]
+8 -> map[0:[vvvA] 1:[<vvA v<vA vv<A] 2:[vvA] 3:[>vvA v>vA vv>A] 4:[<vA v<A] 5:[vA] 6:[>vA v>A] 7:[<A] 8:[A] 9:[>A] A:[>vvvA v>vvA vv>vA vvv>A]]
+9 -> map[0:[<vvvA v<vvA vv<vA vvv<A] 1:[<<vvA <v<vA <vv<A v<<vA v<v<A vv<<A] 2:[<vvA v<vA vv<A] 3:[vvA] 4:[<<vA <v<A v<<A] 5:[<vA v<A] 6:[vA] 7:[<<A] 8:[<A] 9:[A] A:[vvvA]]
+A -> map[0:[<A] 1:[<^<A ^<<A] 2:[<^A ^<A] 3:[^A] 4:[<^<^A <^^<A ^<<^A ^<^<A ^^<<A] 5:[<^^A ^<^A ^^<A] 6:[^^A] 7:[<^<^^A <^^<^A <^^^<A ^<<^^A ^<^<^A ^<^^<A ^^<<^A ^^<^<A ^^^<<A] 8:[<^^^A ^<^^A ^^<^A ^^^<A] 9:[^^^A] A:[A]]
+0 -> map[0:[A] 1:[^<A] 2:[^A] 3:[>^A ^>A] 4:[^<^A ^^<A] 5:[^^A] 6:[>^^A ^>^A ^^>A] 7:[^<^^A ^^<^A ^^^<A] 8:[^^^A] 9:[>^^^A ^>^^A ^^>^A ^^^>A] A:[>A]]
+1 -> map[0:[>vA] 1:[A] 2:[>A] 3:[>>A] 4:[^A] 5:[>^A ^>A] 6:[>>^A >^>A ^>>A] 7:[^^A] 8:[>^^A ^>^A ^^>A] 9:[>>^^A >^>^A >^^>A ^>>^A ^>^>A ^^>>A] A:[>>vA >v>A]]
+2 -> map[0:[vA] 1:[<A] 2:[A] 3:[>A] 4:[<^A ^<A] 5:[^A] 6:[>^A ^>A] 7:[<^^A ^<^A ^^<A] 8:[^^A] 9:[>^^A ^>^A ^^>A] A:[>vA v>A]]
+3 -> map[0:[<vA v<A] 1:[<<A] 2:[<A] 3:[A] 4:[<<^A <^<A ^<<A] 5:[<^A ^<A] 6:[^A] 7:[<<^^A <^<^A <^^<A ^<<^A ^<^<A ^^<<A] 8:[<^^A ^<^A ^^<A] 9:[^^A] A:[vA]]
+6 -> map[0:[<vvA v<vA vv<A] 1:[<<vA <v<A v<<A] 2:[<vA v<A] 3:[vA] 4:[<<A] 5:[<A] 6:[A] 7:[<<^A <^<A ^<<A] 8:[<^A ^<A] 9:[^A] A:[vvA]]
+7 -> map[0:[>vvvA v>vvA vv>vA] 1:[vvA] 2:[>vvA v>vA vv>A] 3:[>>vvA >v>vA >vv>A v>>vA v>v>A vv>>A] 4:[vA] 5:[>vA v>A] 6:[>>vA >v>A v>>A] 7:[A] 8:[>A] 9:[>>A] A:[>>vvvA >v>vvA >vv>vA >vvv>A v>>vvA v>v>vA v>vv>A vv>>vA vv>v>A]]
+Dpad:
+A -> map[<:[<v<A v<<A] >:[vA] A:[A] ^:[<A] v:[<vA v<A]]
+< -> map[<:[A] >:[>>A] A:[>>^A >^>A] ^:[>^A] v:[>A]]
+> -> map[<:[<<A] >:[A] A:[^A] ^:[<^A ^<A] v:[<A]]
+^ -> map[<:[v<A] >:[>vA v>A] A:[>A] ^:[A] v:[vA]]
+v -> map[<:[<A] >:[>A] A:[>^A ^>A] ^:[^A] v:[A]]
+Dpad level 2
+2: A to A -> 1 perms with minLen 1
+2: A to < -> 4 perms with minLen 10
+2: A to > -> 4 perms with minLen 6
+2: A to ^ -> 4 perms with minLen 8
+2: A to v -> 8 perms with minLen 9
+2: < to A -> 2 perms with minLen 8
+2: < to < -> 1 perms with minLen 1
+2: < to > -> 1 perms with minLen 5
+2: < to ^ -> 2 perms with minLen 7
+2: < to v -> 1 perms with minLen 4
+2: > to A -> 1 perms with minLen 4
+2: > to < -> 4 perms with minLen 9
+2: > to > -> 1 perms with minLen 1
+2: > to ^ -> 4 perms with minLen 9
+2: > to v -> 4 perms with minLen 8
+2: ^ to A -> 1 perms with minLen 4
+2: ^ to < -> 4 perms with minLen 9
+2: ^ to > -> 4 perms with minLen 7
+2: ^ to ^ -> 1 perms with minLen 1
+2: ^ to v -> 4 perms with minLen 6
+2: v to A -> 4 perms with minLen 7
+2: v to < -> 4 perms with minLen 8
+2: v to > -> 1 perms with minLen 4
+2: v to ^ -> 1 perms with minLen 4
+2: v to v -> 1 perms with minLen 1
+Dpad level 3
+3: A to A -> 1 perms with minLen 1
+3: A to < -> 64 perms with minLen 26
+3: A to > -> 32 perms with minLen 16
+3: A to ^ -> 8 perms with minLen 18
+3: A to v -> 16 perms with minLen 21
+3: < to A -> 16 perms with minLen 20
+3: < to < -> 1 perms with minLen 1
+3: < to > -> 4 perms with minLen 11
+3: < to ^ -> 16 perms with minLen 19
+3: < to v -> 4 perms with minLen 10
+3: > to A -> 4 perms with minLen 12
+3: > to < -> 8 perms with minLen 19
+3: > to > -> 1 perms with minLen 1
+3: > to ^ -> 8 perms with minLen 21
+3: > to v -> 8 perms with minLen 18
+3: ^ to A -> 4 perms with minLen 10
+3: ^ to < -> 64 perms with minLen 25
+3: ^ to > -> 8 perms with minLen 17
+3: ^ to ^ -> 1 perms with minLen 1
+3: ^ to v -> 32 perms with minLen 16
+3: v to A -> 32 perms with minLen 19
+3: v to < -> 8 perms with minLen 18
+3: v to > -> 4 perms with minLen 10
+3: v to ^ -> 4 perms with minLen 12
+3: v to v -> 1 perms with minLen 1
+Dpad level 4
+4: A to A -> 1 perms with minLen 1
+4: A to < -> 2048 perms with minLen 60
+4: A to > -> 512 perms with minLen 40
+4: A to ^ -> 1024 perms with minLen 46
+4: A to v -> 8192 perms with minLen 55
+4: < to A -> 1024 perms with minLen 48
+4: < to < -> 1 perms with minLen 1
+4: < to > -> 128 perms with minLen 29
+4: < to ^ -> 1024 perms with minLen 47
+4: < to v -> 128 perms with minLen 28
+4: > to A -> 32 perms with minLen 28
+4: > to < -> 1024 perms with minLen 47
+4: > to > -> 1 perms with minLen 1
+4: > to ^ -> 4096 perms with minLen 55
+4: > to v -> 1024 perms with minLen 46
+4: ^ to A -> 128 perms with minLen 28
+4: ^ to < -> 2048 perms with minLen 59
+4: ^ to > -> 256 perms with minLen 43
+4: ^ to ^ -> 1 perms with minLen 1
+4: ^ to v -> 512 perms with minLen 40
+4: v to A -> 1280 perms with minLen 47
+4: v to < -> 1024 perms with minLen 46
+4: v to > -> 128 perms with minLen 28
+4: v to ^ -> 32 perms with minLen 28
+4: v to v -> 1 perms with minLen 1
+Dpad level 5
+5: A to A -> 1 perms with minLen 1
+5: A to < -> signal: killed
