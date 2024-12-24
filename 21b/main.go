@@ -346,14 +346,15 @@ func decodeToLen(text string, decoder map[string]map[string]int) int {
     return minLen
 }
 
-func solve(line string, keypad map[string]map[string][]string, higherDPad map[string]map[string][]int) int {
+func solve(line string, keypad map[string]map[string][]string, higherDPad map[string]map[string]string) int {
     ways := decode(line, keypad)
     newWays := []int{}
     ways = "A" + ways
     for i:=0; i<len(ways)-1;i++ {
         l1 := string(ways[i])
         l2 := string(ways[i+1])
-        for _, encoded := range higherDPad[l1][l2] {
+        for _, encodedRaw := range strings.Split(higherDPad[l1][l2], "_") {
+            encoded := readInt(encodedRaw)
             newWays = append(newWays, encoded)
         }
     }
@@ -459,19 +460,19 @@ func main() {
         }
     }
     // getPermutations(start, end, invalid point) []string 
-    higherOrderMultiDPad := make(map[string]map[string][]int)
+    higherOrderMultiDPad := make(map[string]map[string]string)
     for _, letter := range dpadValues {
-        higherOrderMultiDPad[letter] = make(map[string][]int)
+        higherOrderMultiDPad[letter] = make(map[string]string)
         for _, other := range dpadValues {
             if letter == other {
                 dpad[letter][other] = []string{"A"}
-                higherOrderMultiDPad[letter][other] = []int{encodeMoves("A")}
+                higherOrderMultiDPad[letter][other] = fmt.Sprintf("%d", encodeMoves("A"))
             } else {
                 start := layoutDPInverse[letter]
                 end := layoutDPInverse[other]
                 perms := filter(getPermutations(start, end, invalidKey))
                 dpad[letter][other] = perms
-                higherOrderMultiDPad[letter][other] = []int{encodeMoves(perms[0])}
+                higherOrderMultiDPad[letter][other] = fmt.Sprintf("%d", encodeMoves(perms[0]))
             }
         }
     }
@@ -525,16 +526,17 @@ func main() {
     fmt.Printf("Encoded higher Order DPad: %v\n", highDPad)
     
     // Multi Level DPad transformation
-    transform := func(dpadValues []string, dpad  map[int][]int, multiLevelDPad map[string]map[string][]int) {
+    transform := func(dpadValues []string, dpad  map[int][]int, multiLevelDPad map[string]map[string]string) {
         for _, letter := range dpadValues {
             for _, other := range dpadValues {
-                newResult := []int{}
-                for _, val := range multiLevelDPad[letter][other] {
+                newResult := []string{}
+                for _, valRaw := range strings.Split(multiLevelDPad[letter][other], "_") {
+                    val := readInt(valRaw)
                     for _, res := range dpad[val] {
-                        newResult = append(newResult, res)
+                        newResult = append(newResult, fmt.Sprintf("%d", res))
                     }
                 }
-                multiLevelDPad[letter][other] = newResult
+                multiLevelDPad[letter][other] = strings.Join(newResult, "_")
             }
         }
     }
@@ -543,7 +545,7 @@ func main() {
         transform(dpadValues, highDPad, higherOrderMultiDPad)
         for key, val := range higherOrderMultiDPad {
             for key2, val2 := range val {
-                if len(val2) > 10 {
+                if len(val2) > 100 {
                 fmt.Printf("%d: %v to %v (len %d)\n", i+ 1, key, key2, len(val2))
             } else {
 
