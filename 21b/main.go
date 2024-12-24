@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
     "sync"
-    //"strings"
+    "strings"
     "strconv"
+    "sort"
 )
 
 func readInt(s string) int {
@@ -115,24 +116,51 @@ func ManhattanDistance(p1, p2 point) int {
     return len(line) + total
 }**/
 
-func getPriority(line string, inverse map[string]point, leadingChar string) int {
+func encodeMoves(line string) int {
     if len(line) == 0 {
         return 0
     } else if len(line) == 1 {
         switch line {
         case "<":
-            return 0
-        case "v":
             return 1
-        case ">":
+        case "v":
             return 2
-        case "^":
+        case ">":
             return 3
-        case "A":
+        case "^":
             return 4
+        case "A":
+            return 5
         }
     } 
-    return 10 * getPriority(string(line[:len(line)-1]), inverse, leadingChar) + getPriority(string(line[len(line)-1]), inverse, leadingChar)
+    return 10 * encodeMoves(string(line[:len(line)-1])) + encodeMoves(string(line[len(line)-1]))
+}
+
+func decodeMoves(move int) string {
+    line := ""
+    rest := move % 10
+    next := move / 10
+    for rest > 0 {
+        l := ""
+        switch rest {
+            case 5:
+                l = "A"
+            case 4:
+                l = "^"
+            case 3:
+                l = ">"
+            case 2:
+                l = "v"
+            case 1:
+                l = "<"
+            default:
+                os.Exit(1)
+        }
+        line = l + line
+        rest = next % 10
+        next = next / 10
+    }
+    return line
 }
 
 func getPermutations(start, end, invalid point) []string {
@@ -279,19 +307,23 @@ func SortStrings(strings []string) {
     return newPerms
 }**/
 
+func filter(perms []string) []string {
+    SortStrings(perms)
+    return perms[:1]
+}
 
-func decode(text string, decoder map[string]map[string][]string, inverse map[string]point) []string {
+func decode(text string, decoder map[string]map[string][]string) string {
     currentLetter := "A"
     possibilities := []string{}
     for _, r := range text {
         letter := string(r)
         newPoss := decoder[currentLetter][letter]
         if len(possibilities) == 0 {
-            possibilities = filter(newPoss, inverse, "A")
+            possibilities = filter(newPoss) 
         } else {
             toReplace := []string{}
             for _, perm := range possibilities {
-                for _, perm2 := range filter(newPoss, inverse, string(perm[len(perm)-1])) {
+                for _, perm2 := range filter(newPoss) {
                     newPerm := perm + perm2
                     toReplace = append(toReplace, newPerm) 
                 }
@@ -300,7 +332,7 @@ func decode(text string, decoder map[string]map[string][]string, inverse map[str
         }
         currentLetter = letter
     }
-    return possibilities
+    return possibilities[0]
 }
 
 func decodeToLen(text string, decoder map[string]map[string]int) int {
@@ -314,37 +346,23 @@ func decodeToLen(text string, decoder map[string]map[string]int) int {
     return minLen
 }
 
-func solve(line string, keypad, dpad map[string]map[string][]string, inverse map[string]point) int {
-    ways := decode(line, keypad, inverse)
-    newWays := []string{}
-    for _, way := range ways {
-        newWays = append(newWays, decode(way, dpad, inverse)...)
-    }
-
-    minLen := len(newWays[0])
-    for _, w := range newWays {
-        if len(w) < minLen {
-            minLen = len(w)
+func solve(line string, keypad map[string]map[string][]string, higherDPad map[string]map[string][]int) int {
+    ways := decode(line, keypad)
+    newWays := []int{}
+    ways = "A" + ways
+    for i:=0; i<len(ways)-1;i++ {
+        l1 := string(ways[i])
+        l2 := string(ways[i+1])
+        for _, encoded := range higherDPad[l1][l2] {
+            newWays = append(newWays, encoded)
         }
     }
 
-    return minLen * readInt(line[:len(line)-1])
-}
-
-func solve2(line string, keypad map[string]map[string][]string, lenDPad map[string]map[string]int, inverse map[string]point) int {
-    ways := decode(line, keypad, inverse)
-    
-    waysLen := []int{}
-    for _, perm := range ways {
-        waysLen = append(waysLen, decodeToLen(perm, lenDPad))
+    minLen := 0
+    for _, encoded := range newWays {
+        minLen += len(decodeMoves(encoded))
     }
 
-    minLen := waysLen[0]
-    for _, l := range waysLen {
-        if l < minLen {
-            minLen = l
-        }
-    }
     return minLen * readInt(line[:len(line)-1])
 }
 
@@ -411,17 +429,15 @@ func main() {
             } else {
                 start := layoutKPInverse[letter]
                 end := layoutKPInverse[other]
-                keypad[letter][other] = filter(getPermutations(start, end, invalidKey), layoutKPInverse, "A")
+                keypad[letter][other] = filter(getPermutations(start, end, invalidKey))
             }
         }
     }
 
     dpad := make(map[string]map[string][]string)
-    multiLevelDPad := make(map[string]map[string][]string)
     dpadValues := []string{"A", "<", ">", "^", "v"}
     for _, d := range dpadValues {
         dpad[d] = make(map[string][]string)
-        multiLevelDPad[d] = make(map[string][]string)
     }
 
     layoutDP := make(map[point]string)
@@ -443,19 +459,19 @@ func main() {
         }
     }
     // getPermutations(start, end, invalid point) []string 
-    lenDPad := make(map[string]map[string]int)
+    higherOrderMultiDPad := make(map[string]map[string][]int)
     for _, letter := range dpadValues {
-        lenDPad[letter] = make(map[string]int)
+        higherOrderMultiDPad[letter] = make(map[string][]int)
         for _, other := range dpadValues {
             if letter == other {
                 dpad[letter][other] = []string{"A"}
-                multiLevelDPad[letter][other] = []string{"A"}
+                higherOrderMultiDPad[letter][other] = []int{encodeMoves("A")}
             } else {
                 start := layoutDPInverse[letter]
                 end := layoutDPInverse[other]
-                perms := filter(getPermutations(start, end, invalidKey), layoutDPInverse, "A")
+                perms := filter(getPermutations(start, end, invalidKey))
                 dpad[letter][other] = perms
-                multiLevelDPad[letter][other] = append([]string(nil), perms...) 
+                higherOrderMultiDPad[letter][other] = []int{encodeMoves(perms[0])}
             }
         }
     }
@@ -470,58 +486,71 @@ func main() {
             fmt.Printf("%v -> %v : %v\n", key, key2, val2)
         }
     }
+
+    fmt.Println("MultiHigherDpad:")
+    for key, val := range higherOrderMultiDPad {
+        for key2, val2 := range val {
+            fmt.Printf("%v -> %v : %v\n", key, key2, val2)
+        }
+    }
+
+    // Higher Order Dpad
+    toAnalyse := NewStringSet()
+    highDPad := make(map[int][]int)
+    for _, val := range keypad {
+        for _, val2 := range val {
+            for _, val3 := range val2 {
+                toAnalyse.Add(val3)
+            }
+        }
+    }
+    for _, val := range dpad {
+        for _, val2 := range val {
+            for _, val3 := range val2 {
+                toAnalyse.Add(val3)
+            }
+        }
+    }
+    for _, val := range toAnalyse.GetElements() {
+        resultVal := decode(val, dpad)
+        result := []int{}
+        splits := strings.Split(resultVal, "A")
+        for _, s := range splits[:len(splits)-1] {
+            result = append(result, encodeMoves(s + "A"))
+        }
+
+        encodedVal := encodeMoves(val)
+        highDPad[encodedVal] = result
+    }
+    fmt.Printf("Encoded higher Order DPad: %v\n", highDPad)
     
     // Multi Level DPad transformation
-    transform := func(dpadValues []string, dpad, multiLevelDPad map[string]map[string][]string, inverse map[string]point) {
+    transform := func(dpadValues []string, dpad  map[int][]int, multiLevelDPad map[string]map[string][]int) {
         for _, letter := range dpadValues {
             for _, other := range dpadValues {
-                fmt.Printf("%v to %v -> \n", letter, other)
-                newPermsSet := NewStringSet()
-                for _, currentPerm := range multiLevelDPad[letter][other] {
-                    for _, newPerm := range decode(currentPerm, dpad, layoutDPInverse) {
-                        newPermsSet.Add(newPerm)
-                        fmt.Printf("\t%v to %v\n", currentPerm, len(newPerm))
+                newResult := []int{}
+                for _, val := range multiLevelDPad[letter][other] {
+                    for _, res := range dpad[val] {
+                        newResult = append(newResult, res)
                     }
                 }
-                fmt.Printf("New perms size: %d\n", newPermsSet.Size())
-                newPerms := newPermsSet.GetElements()
-                minPrio := getPriority(newPerms[0], layoutDPInverse, "A")
-                minLen := len(newPerms[0])
-                for _, perm := range newPerms {
-                    prio := getPriority(perm, layoutDPInverse, "A")
-                    length := len(perm)
-                    if prio < minPrio {
-                        minPrio = prio
-                    }
-                    if length < minLen {
-                        minLen = length
-                    }
-                }
-                newPerms2 := []string{}
-                for _, perm := range newPerms {
-                    prio := getPriority(perm, layoutDPInverse, "A")
-                    if prio == minPrio {
-                        newPerms2 = append(newPerms2, perm)
-                        } else {
-                            fmt.Printf("Out: %v %v -> %v\n", letter, other, perm)
-                    }
-                }
-                multiLevelDPad[letter][other] = newPerms2[:1]
-                fmt.Printf("%d perms with minLen %d\n", len(newPerms2), minLen)
+                multiLevelDPad[letter][other] = newResult
             }
         }
-        for key, val := range multiLevelDPad {
-            if len(val) <= 20 {
-                for key2, val2 := range val {
-                    fmt.Printf("%v -> %v : %v\n", key, key2, val2)
-                }
-            }
-        }
-        fmt.Println("")
     }
     for i:=1;i<25;i++{
-        // transform := func(dpadValues []string, dpad, multiLevelDPad map[string]map[string][]string, inverse map[string]point) {
-        transform(dpadValues, dpad, multiLevelDPad, layoutDPInverse)
+        fmt.Printf("Level %d\n", i + 1)
+        transform(dpadValues, highDPad, higherOrderMultiDPad)
+        for key, val := range higherOrderMultiDPad {
+            for key2, val2 := range val {
+                if len(val2) > 10 {
+                fmt.Printf("%d: %v to %v (len %d)\n", i+ 1, key, key2, len(val2))
+            } else {
+
+                fmt.Printf("%d: %v to %v as %v (len %d)\n", i+ 1, key, key2, val2, len(val2))
+            }
+            }
+        }
     }
 
     // Prepare for line-by-line reading and writing
@@ -540,7 +569,7 @@ func main() {
 		defer wg.Done()
 
 		for job := range jobs {
-			result := solve(job, keypad, multiLevelDPad, layoutDPInverse)
+			result := solve(job, keypad, higherOrderMultiDPad)
 			fmt.Printf("Worker %d processed job: %s -> %d\n", id, job, result)
 			results <- result
 		}
