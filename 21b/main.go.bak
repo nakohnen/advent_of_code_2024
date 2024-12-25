@@ -10,10 +10,6 @@ import (
     "sort"
 )
 
-type Args struct {
-    input, level int
-}
-
 func readInt(s string) int {
 	val, err := strconv.Atoi(s)
 	if err != nil {
@@ -371,95 +367,15 @@ func solve(line string, keypad map[string]map[string][]string, higherDPad map[st
     return minLen * readInt(line[:len(line)-1])
 }
 
-func solveInner(input, level int, higherDPad map[int][]int, cache map[Args]int, mutex *sync.Mutex) int {
-    mutex.Lock()
-    if res, exists := cache[Args{input, level}]; exists {
-        mutex.Unlock()
-        return res
-    }
-    mutex.Unlock()
-
-    result := 0
-    if level == 1 {
-        result = len(decodeMoves(input))
-    } else {
-
-        for _, newer := range higherDPad[input] {
-            result += solveInner(newer, level - 1, higherDPad, cache, mutex)
-        }
-    }
-
-    mutex.Lock()
-    cache[Args{input, level}] = result
-    mutex.Unlock()
-    return result
-}
-
-func solveR(line string, levels int, keypad map[string]map[string][]string, higherDPad map[int][]int, cache map[Args]int, mu *sync.Mutex) int {
-    sum := 0
-
-	// Worker function closure that uses `multiplier`
-	worker := func(id int, jobs <-chan int, results chan<- int, wg *sync.WaitGroup, cache map[Args]int, mu *sync.Mutex) {
-		defer wg.Done()
-
-		for job := range jobs {
-			result := solveInner(job, levels, higherDPad, cache, mu)
-			fmt.Printf("Worker %d processed job: %v -> %d\n", id, job, result)
-			results <- result
-		}
-	}
-
-	// Inputs and setup
-	jobs := make(chan int, len(line))
-	results := make(chan int, len(line))
-	var wg sync.WaitGroup
-
-	// Start workers
-	numWorkers := 14
-    if numWorkers > len(line) {
-        numWorkers = len(line)
-    }
-	for i := 1; i <= numWorkers; i++ {
-		wg.Add(1)
-		go worker(i, jobs, results, &wg, cache, mu)
-	}
-
-	// Send jobs
-    work := "A" +  line
-    for i:=0;i<len(work)-1;i++{
-        l1 := string(work[i])
-        l2 := string(work[i+1])
-
-        input := encodeMoves(keypad[l1][l2][0])
-
-        jobs <- input
-    }
-	close(jobs)
-
-	// Wait and collect results
-	wg.Wait()
-	close(results)
-
-	for result := range results {
-        sum += result
-	}
-    fmt.Printf("Result: %d\n", sum)
-    return sum
-}
-
 func main() {
 	// Check if enough arguments are provided
-	if len(os.Args) != 3 {
-		fmt.Println("Usage: go run main.go <input_file> <levels>")
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: go run main.go <input_file>")
 		os.Exit(1)
 	}
 
 	// Parse command-line arguments
 	inputFile := os.Args[1]
-
-
-	// Parse command-line arguments
-	inputLevels := os.Args[2]
 
 	// Open the input file
 	inFile, err := os.Open(inputFile)
@@ -608,6 +524,36 @@ func main() {
         highDPad[encodedVal] = result
     }
     fmt.Printf("Encoded higher Order DPad: %v\n", highDPad)
+    
+    // Multi Level DPad transformation
+    transform := func(dpadValues []string, dpad  map[int][]int, multiLevelDPad map[string]map[string]string) {
+        for _, letter := range dpadValues {
+            for _, other := range dpadValues {
+                newResult := []string{}
+                for _, valRaw := range strings.Split(multiLevelDPad[letter][other], "_") {
+                    val := readInt(valRaw)
+                    for _, res := range dpad[val] {
+                        newResult = append(newResult, fmt.Sprintf("%d", res))
+                    }
+                }
+                multiLevelDPad[letter][other] = strings.Join(newResult, "_")
+            }
+        }
+    }
+    for i:=1;i<25;i++{
+        fmt.Printf("Level %d\n", i + 1)
+        transform(dpadValues, highDPad, higherOrderMultiDPad)
+        for key, val := range higherOrderMultiDPad {
+            for key2, val2 := range val {
+                if len(val2) > 100 {
+                fmt.Printf("%d: %v to %v (len %d)\n", i+ 1, key, key2, len(val2))
+            } else {
+
+                fmt.Printf("%d: %v to %v as %v (len %d)\n", i+ 1, key, key2, val2, len(val2))
+            }
+            }
+        }
+    }
 
     // Prepare for line-by-line reading and writing
     scanner := bufio.NewScanner(inFile)
@@ -619,23 +565,52 @@ func main() {
         line := scanner.Text()
         toWork = append(toWork, line)
     }
-
-    levels := readInt(inputLevels)
-    cache := make(map[Args]int)
-    var mu sync.Mutex
-    for _, line := range toWork {
-        fmt.Println(line)
-        nbr := readInt(line[:len(line)-1])
-        sum += nbr * solveR(line, levels + 1, keypad, highDPad, cache, &mu)
-    }
     
+	// Worker function closure that uses `multiplier`
+	worker := func(id int, jobs <-chan string, results chan<- int, wg *sync.WaitGroup) {
+		defer wg.Done()
+
+		for job := range jobs {
+			result := solve(job, keypad, higherOrderMultiDPad)
+			fmt.Printf("Worker %d processed job: %s -> %d\n", id, job, result)
+			results <- result
+		}
+	}
+
+	// Inputs and setup
+	jobs := make(chan string, len(toWork))
+	results := make(chan int, len(toWork))
+	var wg sync.WaitGroup
+
+	// Start workers
+	numWorkers := 14
+    if numWorkers > len(toWork) {
+        numWorkers = len(toWork)
+    }
+	for i := 1; i <= numWorkers; i++ {
+		wg.Add(1)
+		go worker(i, jobs, results, &wg)
+	}
+
+	// Send jobs
+	for _, input := range toWork {
+		jobs <- input
+	}
+	close(jobs)
+
+	// Wait and collect results
+	wg.Wait()
+	close(results)
+
+	for result := range results {
+        sum += result
+	}
+	fmt.Printf(" -> Sum: %d\n", sum)
 
     if err4 := scanner.Err(); err4 != nil {
         fmt.Printf("Error reading input file: %v\n", err4)
         os.Exit(1)
     }
-
-    fmt.Printf(" -> Sum: %d\n", sum)
 
 	fmt.Println("Processing complete!")
 }
