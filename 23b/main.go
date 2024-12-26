@@ -95,102 +95,53 @@ func contains[T comparable](slice []T, element T) bool {
 }
 
 func getMaxNetwork(adj map[string][]string, connected map[string]map[string]bool) string {
-	triplets := getAllTriplets(adj, connected)
-	fmt.Println("Triplets: ")
-	for _, triplet := range triplets {
-		fmt.Printf("Triplet %v\n", triplet)
-	}
-	toMerge := make(map[int]int)
-    for i, tripletA := range triplets {
-        for j, tripletB := range triplets {
-            if i == j {
-                continue
-            }
-			nodes := NewStringSet()
-			for _, node := range tripletA {
-				nodes.Add(node)
-			}
-			for _, node := range tripletB {
-				nodes.Add(node)
-			}
-			if nodes.Size() != 4 {
-				continue
-			}
-			difference := []string{}
-			common := []string{}
-			for _, node := range nodes.GetElements() {
-				if contains(tripletA, node) && contains(tripletB, node) {
-					common = append(common, node)
-				} else {
-					difference = append(difference, node)
-				}
-			}
-			toLook := []string{}
-			for _, node := range common {
-				newCandidate := []string{node}
-				for _, node2 := range difference {
-					newCandidate = append(newCandidate, node2)
-				}
-				sort.Strings(newCandidate)
-				toLook = append(toLook, strings.Join(newCandidate, ","))
-			}
-			foundCount := 0
-			foundOthers := []int{}
-            for k, tripletC := range triplets {
-                if k == i || k == j {
+    masterlist := [][]string{}
+
+    for node, others := range adj {
+        list := append([]string{node}, others...)
+        masterlist = append(masterlist, list)
+    }
+	// Sort by the length of the inner slices
+	sort.Slice(masterlist, func(i, j int) bool {
+		return len(masterlist[i]) > len(masterlist[j])
+	})
+    candidates := NewStringSet()
+    for _, neighbours := range masterlist {
+        counter := make(map[string]int)
+        for i, node := range neighbours {
+            counter[node] = 0
+            for j, node2 := range neighbours {
+                if i == j {
                     continue
                 }
-				textRepr := strings.Join(tripletC, ",")
-				for _, cand := range toLook {
-					if cand == textRepr {
-						foundCount += 1
-						foundOthers = append(foundOthers, k)
-						break
-					}
-				}
-			}
-			if foundCount == 2 {
-				toMerge[j] = i
-				for _, other := range foundOthers {
-					toMerge[other] = i
-				}
-			}
-		}
-	}
+                if connected[node2][node] {
+                    counter[node] += 1
+                }
+            }
+        }
+        counterOverview := make(map[int]int)
+        for _, val := range counter {
+            counterOverview[val] = 0
+        }
+        for _, val := range counter {
+            counterOverview[val] += 1
+        }
+        fmt.Printf("List %v with counters %v (%v)\n", neighbours, counter, counterOverview)
+        if counterOverview[12] == 12 {
+            for _, n := range neighbours {
+                if counter[n] == 12 {
+                    candidates.Add(n)
+                }
+            }
+        }
+    }
+    fmt.Printf("Candidates: %v\n", candidates.GetElements())
+    target := candidates.GetElements()
+    sort.Strings(target)
+    return strings.Join(target, ",")
 
-	reverseMerge := make(map[int][]string)
-	results := [][]string{}
-	for _, to := range toMerge {
-		reverseMerge[to] = []string{}
-		reverseMerge[to] = append(reverseMerge[to], triplets[to]...)
-	}
-	for from, to := range toMerge {
-		reverseMerge[to] = append(reverseMerge[to], triplets[from]...)
-	}
-	for source, nodes := range reverseMerge {
-		removeDuplicates := NewStringSet()
-		for _, node := range nodes {
-			removeDuplicates.Add(node)
-		}
-		reverseMerge[source] = removeDuplicates.GetElements()
-		sort.Strings(reverseMerge[source])
-		results = append(results, reverseMerge[source])
-	}
-	fmt.Print("To Merge:\n")
-	for _, merge := range results {
-		fmt.Printf("%v\n", merge)
-	}
 
-	maxLen := 0
-	maxId := -1
-	for id, merged := range results {
-		if len(merged) > maxLen {
-			maxLen = len(merged)
-			maxId = id
-		}
-	}
-
-	return strings.Join(results[maxId], ",")
+    
 }
 
 func main() {
