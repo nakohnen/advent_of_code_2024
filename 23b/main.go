@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-    //"sync"
-    "strings"
-    "strconv"
-    "sort"
+	//"sync"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 // StringSet type using map[string]struct{}
@@ -59,117 +59,138 @@ func readInt(s string) int {
 	return val
 }
 
-func getAllTriplets(adj map[string][]string, connected map[string]map[string]bool) []string {
-    triplets := NewStringSet()
+func getAllTriplets(adj map[string][]string, connected map[string]map[string]bool) [][]string {
+	triplets := NewStringSet()
 
-    for p1, others := range adj {
-        for _, p2 := range others {
-            for _, p3 := range adj[p2] {
-                if connected[p1][p3] {
-                    triplet := []string{p1, p2, p3}
-                    sort.Strings(triplet)
-                    triplets.Add(strings.Join(triplet, ","))
-                }
-            }
-        }
-    }
-    result := triplets.GetElements()
-    sort.Strings(result)
-    return result
+	for p1, others := range adj {
+		for _, p2 := range others {
+			for _, p3 := range adj[p2] {
+				if connected[p1][p3] {
+					triplet := []string{p1, p2, p3}
+					sort.Strings(triplet)
+					triplets.Add(strings.Join(triplet, ","))
+				}
+			}
+		}
+	}
+	result := triplets.GetElements()
+	sort.Strings(result)
+	finalResult := [][]string{}
+	for _, res := range result {
+		triplet := strings.Split(res, ",")
+		sort.Strings(triplet)
+		finalResult = append(finalResult, triplet)
+	}
+	return finalResult
 }
 
+// Generic contains function
+func contains[T comparable](slice []T, element T) bool {
+	for _, item := range slice {
+		if item == element {
+			return true
+		}
+	}
+	return false
+}
 
 func getMaxNetwork(adj map[string][]string, connected map[string]map[string]bool) string {
-
-    found := true
-    newAdj := adj
-    newConnected := connected
-    for found {
-        found = false
-        triplet := NewStringSet()
-        fmt.Printf("newAdj: %v\n", newAdj)
-        //fmt.Printf("newConnected: %v\n", newConnected)
-
-        outer:
-        for p1, others := range newAdj {
-            for _, p2 := range others {
-                for _, p3 := range newAdj[p2] {
-                    if newConnected[p1][p3] {
-                        triplet.Add(p1)
-                        triplet.Add(p2)
-                        triplet.Add(p3)
-                        fmt.Printf("Found triplet %v\n", triplet)
-                        found = true
-                        break outer
-                    }
+	triplets := getAllTriplets(adj, connected)
+	fmt.Println("Triplets: ")
+	for _, triplet := range triplets {
+		fmt.Printf("Triplet %v\n", triplet)
+	}
+	toMerge := make(map[int]int)
+    for i, tripletA := range triplets {
+        for j, tripletB := range triplets {
+            if i == j {
+                continue
+            }
+			nodes := NewStringSet()
+			for _, node := range tripletA {
+				nodes.Add(node)
+			}
+			for _, node := range tripletB {
+				nodes.Add(node)
+			}
+			if nodes.Size() != 4 {
+				continue
+			}
+			difference := []string{}
+			common := []string{}
+			for _, node := range nodes.GetElements() {
+				if contains(tripletA, node) && contains(tripletB, node) {
+					common = append(common, node)
+				} else {
+					difference = append(difference, node)
+				}
+			}
+			toLook := []string{}
+			for _, node := range common {
+				newCandidate := []string{node}
+				for _, node2 := range difference {
+					newCandidate = append(newCandidate, node2)
+				}
+				sort.Strings(newCandidate)
+				toLook = append(toLook, strings.Join(newCandidate, ","))
+			}
+			foundCount := 0
+			foundOthers := []int{}
+            for k, tripletC := range triplets {
+                if k == i || k == j {
+                    continue
                 }
-            }
-        }
-        tripletJoin := strings.Join(triplet.GetElements(), ",")
-        newAdj2 := make(map[string][]string)
-        for node, _ := range newAdj {
-            if triplet.Contains(node) {
-                newAdj2[tripletJoin] = []string{}
-            } else {
-                newAdj2[node] = []string{}
-            }
-        }
+				textRepr := strings.Join(tripletC, ",")
+				for _, cand := range toLook {
+					if cand == textRepr {
+						foundCount += 1
+						foundOthers = append(foundOthers, k)
+						break
+					}
+				}
+			}
+			if foundCount == 2 {
+				toMerge[j] = i
+				for _, other := range foundOthers {
+					toMerge[other] = i
+				}
+			}
+		}
+	}
 
+	reverseMerge := make(map[int][]string)
+	results := [][]string{}
+	for _, to := range toMerge {
+		reverseMerge[to] = []string{}
+		reverseMerge[to] = append(reverseMerge[to], triplets[to]...)
+	}
+	for from, to := range toMerge {
+		reverseMerge[to] = append(reverseMerge[to], triplets[from]...)
+	}
+	for source, nodes := range reverseMerge {
+		removeDuplicates := NewStringSet()
+		for _, node := range nodes {
+			removeDuplicates.Add(node)
+		}
+		reverseMerge[source] = removeDuplicates.GetElements()
+		sort.Strings(reverseMerge[source])
+		results = append(results, reverseMerge[source])
+	}
+	fmt.Print("To Merge:\n")
+	for _, merge := range results {
+		fmt.Printf("%v\n", merge)
+	}
 
-        for node, others := range newAdj {
-            // Node is from a triplet
-            if triplet.Contains(node) {
-                for _, otherNode := range others {
-                    // From triplet to others
-                    if !triplet.Contains(otherNode) {
-                        newAdj2[tripletJoin] = append(newAdj2[tripletJoin], otherNode)
-                    }
-                }
-            } else {
-                // Node is not a triplet
-                for _, otherNode := range others {
-                    // From others to triplet
-                    if triplet.Contains(otherNode) {
-                        newAdj2[node] = append(newAdj2[node], tripletJoin)
-                    // From others to non-triplet
-                    } else {
-                        newAdj2[node] = append(newAdj2[node], otherNode)
-                    }
-                }
-            }
-        }
-        for node, others := range newAdj2 {
-            removeDuplicates := NewStringSet()
-            for _, otherNode := range others {
-                removeDuplicates.Add(otherNode)
-            }
-            newAdj2[node] = removeDuplicates.GetElements()
-        }
+	maxLen := 0
+	maxId := -1
+	for id, merged := range results {
+		if len(merged) > maxLen {
+			maxLen = len(merged)
+			maxId = id
+		}
+	}
 
-        newConnected = make(map[string]map[string]bool)
-        for p1, others := range adj {
-            newConnected[p1] = make(map[string]bool)
-            for p2, _ := range adj {
-                newConnected[p1][p2] = false
-            }
-            for _, p2 := range others {
-                newConnected[p1][p2] = true
-            }
-        }
-        newAdj = newAdj2
-
-
-    }
-    longestNode := 0
-    nodeName := ""
-    for node, _ := range newAdj {
-        splitLength := len(strings.Split(node,","))
-        if splitLength > longestNode {
-            longestNode = splitLength
-            nodeName = node
-        }
-    }
-    return nodeName
+	return strings.Join(results[maxId], ",")
 }
 
 func main() {
@@ -193,51 +214,49 @@ func main() {
 	// Prepare for line-by-line reading and writing
 	scanner := bufio.NewScanner(inFile)
 
-    adj := make(map[string][]string)
-    connected := make(map[string]map[string]bool)
-
+	adj := make(map[string][]string)
+	connected := make(map[string]map[string]bool)
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		//fmt.Println(line)
 
-        splits := strings.Split(line, "-")
-        p1 := splits[0]
-        p2 := splits[1]
+		splits := strings.Split(line, "-")
+		p1 := splits[0]
+		p2 := splits[1]
 
-        if _, exists := adj[p1]; exists {
-            adj[p1] = append(adj[p1], p2)
-        } else {
-            adj[p1] = []string{p2}
-        }
+		if _, exists := adj[p1]; exists {
+			adj[p1] = append(adj[p1], p2)
+		} else {
+			adj[p1] = []string{p2}
+		}
 
-        if _, exists := adj[p2]; exists {
-            adj[p2] = append(adj[p2], p1)
-        } else {
-            adj[p2] = []string{p1}
-        }
+		if _, exists := adj[p2]; exists {
+			adj[p2] = append(adj[p2], p1)
+		} else {
+			adj[p2] = []string{p1}
+		}
 
 	}
-    for p1, others := range adj {
-        connected[p1] = make(map[string]bool)
-        for p2, _ := range adj {
-            connected[p1][p2] = false
-        }
-        for _, p2 := range others {
-            connected[p1][p2] = true
-        }
-    }
+	for p1, others := range adj {
+		connected[p1] = make(map[string]bool)
+		for p2, _ := range adj {
+			connected[p1][p2] = false
+		}
+		for _, p2 := range others {
+			connected[p1][p2] = true
+		}
+	}
 
+	//func getMaxNetwork(adj map[string][]string, connected map[string]map[string]bool) string {
+	result := getMaxNetwork(adj, connected)
 
-//func getMaxNetwork(adj map[string][]string, connected map[string]map[string]bool) string {
-    result := getMaxNetwork(adj, connected)
+	fmt.Println(result)
 
-    fmt.Println(result)
-
-    if err4 := scanner.Err(); err4 != nil {
-        fmt.Printf("Error reading input file: %v\n", err4)
-        os.Exit(1)
-    }
+	if err4 := scanner.Err(); err4 != nil {
+		fmt.Printf("Error reading input file: %v\n", err4)
+		os.Exit(1)
+	}
 
 	fmt.Println("Processing complete!")
 }

@@ -1,13 +1,4 @@
-newAdj: map[aq:[yn vc cg wq] cg:[de tb yn aq] co:[ka ta de tc] de:[cg co ta ka] ka:[co tb ta de] kh:[tc qp ub ta] qp:[kh ub td wh] ta:[co ka de kh] tb:[cg ka wq vc] tc:[kh wh td co] td:[tc wh qp yn] ub:[qp kh wq vc] vc:[aq ub wq tb] wh:[tc td yn qp] wq:[tb ub aq vc] yn:[aq cg wh td]]
-Found triplet &{map[kh:{} qp:{} ub:{}]}
-newAdj: map[aq:[yn vc cg wq] cg:[aq de tb yn] co:[tc ka ta de] de:[cg co ta ka] ka:[co tb ta de] ta:[co ka de ub,kh,qp] tb:[cg ka wq vc] tc:[ub,kh,qp wh td co] td:[tc wh ub,kh,qp yn] ub,kh,qp:[wq vc td wh tc ta] vc:[aq ub,kh,qp wq tb] wh:[tc td yn ub,kh,qp] wq:[tb ub,kh,qp aq vc] yn:[cg wh td aq]]
-Found triplet &{map[tc:{} td:{} wh:{}]}
-newAdj: map[aq:[vc cg wq yn] cg:[aq de tb yn] co:[wh,tc,td ka ta de] de:[co ta ka cg] ka:[co tb ta de] ta:[co ka de ub,kh,qp] tb:[cg ka wq vc] ub,kh,qp:[ta wq vc wh,tc,td] vc:[aq ub,kh,qp wq tb] wh,tc,td:[yn ub,kh,qp co] wq:[tb ub,kh,qp aq vc] yn:[wh,tc,td aq cg]]
-Found triplet &{map[aq:{} cg:{} yn:{}]}
-newAdj: map[co:[ta de wh,tc,td ka] de:[co ta ka yn,cg,aq] ka:[co tb ta de] ta:[ub,kh,qp co ka de] tb:[yn,cg,aq ka wq vc] ub,kh,qp:[wq vc wh,tc,td ta] vc:[yn,cg,aq ub,kh,qp wq tb] wh,tc,td:[yn,cg,aq ub,kh,qp co] wq:[yn,cg,aq vc tb ub,kh,qp] yn,cg,aq:[wh,tc,td vc wq de tb]]
-Found triplet &{map[tb:{} vc:{} yn,cg,aq:{}]}
-newAdj: map[co:[ka ta de wh,tc,td] de:[co ta ka tb,yn,cg,aq,vc] ka:[co tb,yn,cg,aq,vc ta de] ta:[ub,kh,qp co ka de] tb,yn,cg,aq,vc:[ka wq ub,kh,qp wh,tc,td de] ub,kh,qp:[wq tb,yn,cg,aq,vc wh,tc,td ta] wh,tc,td:[co tb,yn,cg,aq,vc ub,kh,qp] wq:[tb,yn,cg,aq,vc ub,kh,qp]]
-Found triplet &{map[co:{} ka:{} ta:{}]}
-newAdj: map[de:[ta,ka,co tb,yn,cg,aq,vc] ta,ka,co:[tb,yn,cg,aq,vc de wh,tc,td ub,kh,qp] tb,yn,cg,aq,vc:[wh,tc,td de ta,ka,co wq ub,kh,qp] ub,kh,qp:[wq tb,yn,cg,aq,vc wh,tc,td ta,ka,co] wh,tc,td:[ta,ka,co tb,yn,cg,aq,vc ub,kh,qp] wq:[tb,yn,cg,aq,vc ub,kh,qp]]
-tb,yn,cg,aq,vc
+Triplets [[aq cg yn] [aq vc wq] [co de ka] [co de ta] [co ka ta] [de ka ta] [kh qp ub] [qp td wh] [tb vc wq] [tc td wh] [td wh yn] [ub vc wq]]
+To Merge: map[2:[co de ka ta]]
+co,de,ka,ta
 Processing complete!
