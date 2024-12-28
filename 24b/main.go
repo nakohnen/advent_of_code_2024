@@ -286,47 +286,67 @@ func main() {
         gates[a] = gates[b]
         gates[b] = tmp
     }
+
+
+
     flip("nfj", "ncd", gates)
-    flip("qnw", "mrm", gates)
+    flip("z15", "qnw", gates)
     flip("cqr", "z20", gates)
     flip("z37", "vkg", gates)
+    flips := []string{"nfj", "ncd", "z15", "qnw", "cqr", "z20", "z37", "vkg"}
+    sort.Strings(flips)
 
     problemWires := NewStringSet()
     okWires := NewStringSet()
     for i:=-1;i<maxZ;i++ {
         for j:=-1;j<maxZ;j++ {
-            valA := 0
-            valB := 0
-            if i >= 0 {
-                valA = intPow(2,i)
-            }
-            if j >= 0 {
-                valB = intPow(2,j)
-            }
-            res, finStates := resolvePair(valA, valB, gates)
-            binaryRes := ReverseString(strconv.FormatInt(int64(res), 2))
-            binaryAB:= ReverseString(strconv.FormatInt(int64(valA + valB), 2))
-            fmt.Printf("%v (2**%d) + %v (2**%d) =? %v with bx%s (target: %d with bx%s)\n", valA, i, valB, j, res, binaryRes, valA + valB, binaryAB)
-            if valA + valB != res {
-                delta := res - valA - valB
-                binary := ReverseString(strconv.FormatInt(int64(delta), 2))
-                fmt.Printf("Found error: %d (%v highest bit: %d)\n", delta, binary, len(binary))
-                for wire, val := range finStates {
-                    if val != 0 {
-                        if wire[0] == 'z' {
-                            fmt.Printf("%s, %d\n", wire, val)
-                        }
-                        if wire[0] != 'z' && wire[0] != 'x' && wire[0] != 'y' {
-                            problemWires.Add(wire)
+            for k := -1; k < j;k++ {
+                valA := 0
+                valB := 0
+                valK := 0
+                if i >= 0 {
+                    valA = intPow(2,i)
+                }
+                
+                if k >= 0 {
+                    valK = intPow(2, k)
+                }
+
+                if j >= 0 {
+                    valB = intPow(2, j) + valK
+                }
+                res, finStates := resolvePair(valA, valB, gates)
+                binaryRes := ReverseString(strconv.FormatInt(int64(res), 2))
+                binaryAB:= ReverseString(strconv.FormatInt(int64(valA + valB), 2))
+                binaryA:= ReverseString(strconv.FormatInt(int64(valA), 2))
+                binaryB:= ReverseString(strconv.FormatInt(int64(valB), 2))
+                if valA + valB != res {
+                    fmt.Printf("%v (2**%d) + %v (2**%d + 2**%d) =? %v with bx%s (target: %d with bx%s)\n", valA, i, valB, j, k, res, binaryRes, valA + valB, binaryAB)
+                    fmt.Printf("bx%s + bx%s == bx%s (target: bx%s)\n", binaryA, binaryB, binaryRes, binaryAB)
+                    delta := res - valA - valB
+                    binary := ReverseString(strconv.FormatInt(int64(delta), 2))
+                    fmt.Printf("Found error: %d (%v highest bit: %d)\n", delta, binary, len(binary))
+                    zStates := ""
+                    for wire, val := range finStates {
+                        if val != 0 {
+                            if wire[0] == 'z' {
+                                zStates = zStates + fmt.Sprintf(" %s=%d;", wire, val)
+                            }
+                            if wire[0] != 'z' && wire[0] != 'x' && wire[0] != 'y' {
+                                problemWires.Add(wire)
+                            }
                         }
                     }
-                }
-            } else {
-                for wire, val := range finStates {
-                    if val != 0 {
-                        //fmt.Printf("%s, %d\n", wire, val)
-                        if wire[0] != 'z' && wire[0] != 'x' && wire[0] != 'y' {
-                            okWires.Add(wire)
+                    if len(zStates) > 0 {
+                        fmt.Println(zStates)
+                    }
+                } else {
+                    for wire, val := range finStates {
+                        if val != 0 {
+                            //fmt.Printf("%s, %d\n", wire, val)
+                            if wire[0] != 'z' && wire[0] != 'x' && wire[0] != 'y' {
+                                okWires.Add(wire)
+                            }
                         }
                     }
                 }
@@ -334,7 +354,7 @@ func main() {
         }
     }
     fmt.Printf("Problem wires: %v (%d)\n", problemWires.GetElements(), problemWires.Size())
-    fmt.Printf("OK wires: %v (%d)\n", okWires.GetElements(), okWires.Size())
+    //fmt.Printf("OK wires: %v (%d)\n", okWires.GetElements(), okWires.Size())
 
     okerWires := NewStringSet()
     for _, wire := range problemWires.GetElements() {
@@ -352,63 +372,74 @@ func main() {
             fmt.Printf("%v = %s %s %s (included)\n", wire, g.regA, g.op, g.regB)
         }
     }
+    debug := false
+    if debug {
+        cases := []string{"z15", "gnc", "ctg", "rjm", "srr", "qnw", "mrm", "dnn"}
+        for m:=0;m<len(cases);m++{
+            for n:=m+1;n<len(cases);n++{
+                newGates := make(map[string]gate)
+                switchA := cases[m]
+                switchB := cases[n]
+                for key, val := range gates {
+                    newGates[key] = val
+                }
+                flip(switchB, switchA, newGates)
+                gateA := gates[switchA]
+                gateB := gates[switchB]
+                if gateA.regA == switchB || gateA.regB == switchB || gateB.regA == switchA || gateB.regB == switchA {
+                    continue
+                }
 
-    cases := []string{"gnc", "ctg", "rjm", "srr", "qnw", "mrm"}
-    for m:=0;m<len(cases);m++{
-        for n:=m+1;n<len(cases);n++{
-            newGates := make(map[string]gate)
-            switchA := cases[m]
-            switchB := cases[n]
-            for key, val := range gates {
-                newGates[key] = val
-            }
-            flip(switchB, switchA, newGates)
-            gateA := gates[switchA]
-            gateB := gates[switchB]
-            if gateA.regA == switchB || gateA.regB == switchB || gateB.regA == switchA || gateB.regB == switchA {
-                continue
-            }
+                fmt.Printf("*** Switch %s with %s\n", switchA, switchB)
+                errors := 0
+                for i:=-1;i<maxZ;i++ {
+                    for j:=-1;j<maxZ;j++ {
+                        for k := j-2; k < j;k++ {
+                            valA := 0
+                            valB := 0
+                            valK := 0
+                            if i >= 0 {
+                                valA = intPow(2,i)
+                            }
 
-            fmt.Printf("*** Switch %s with %s\n", switchA, switchB)
-            errors := 0
-            for i:=-1;i<maxZ;i++ {
-                for j:=-1;j<maxZ;j++ {
-                    valA := 0
-                    valB := 0
-                    if i >= 0 {
-                        valA = intPow(2,i)
-                    }
-                    if j >= 0 {
-                        valB = intPow(2,j)
-                    }
-                    res, finStates := resolvePair(valA, valB, newGates)
-                    binaryRes := ReverseString(strconv.FormatInt(int64(res), 2))
-                    binaryAB:= ReverseString(strconv.FormatInt(int64(valA + valB), 2))
-                    if valA + valB != res {
-                        errors += 1
-                        fmt.Printf("%v (2**%d) + %v (2**%d) =? %v with bx%s (target: %d with bx%s)\n", valA, i, valB, j, res, binaryRes, valA + valB, binaryAB)
-                        delta := res - valA - valB
-                        binary := ReverseString(strconv.FormatInt(int64(delta), 2))
-                        fmt.Printf("Found error: %d (%v highest bit: %d)\n", delta, binary, len(binary))
-                        for wire, val := range finStates {
-                            if val != 0 {
-                                if wire[0] == 'z' {
-                                    fmt.Printf("%s, %d\n", wire, val)
-                                }
+                            if k >= 0 {
+                                valK = intPow(2, k)
+                            }
+
+                            if j >= 0 {
+                                valB = intPow(2, j) + valK
+                            }
+                            res, _ := resolvePair(valA, valB, newGates)
+                            //res, finStates := resolvePair(valA, valB, newGates)
+                            //binaryRes := ReverseString(strconv.FormatInt(int64(res), 2))
+                            //binaryAB:= ReverseString(strconv.FormatInt(int64(valA + valB), 2))
+                            if valA + valB != res {
+                                errors += 1
+                                //fmt.Printf("%v (2**%d) + %v (2**%d + 2**%d) =? %v with bx%s (target: %d with bx%s)\n", valA, i, valB, j, k, res, binaryRes, valA + valB, binaryAB)
+                                //delta := res - valA - valB
+                                //binary := ReverseString(strconv.FormatInt(int64(delta), 2))
+                                //fmt.Printf("Found error: %d (%v highest bit: %d)\n", delta, binary, len(binary))
+                                /**for wire, val := range finStates {
+                                    if val != 0 {
+                                        if wire[0] == 'z' {
+                                            //fmt.Printf("%s, %d\n", wire, val)
+                                        }
+                                    }
+                                }**/
                             }
                         }
                     }
                 }
+                fmt.Printf("Total Errors: %d\n", errors)
+                if errors == 0 {
+                    fmt.Printf("Found correct pair")
+                }
+
             }
-            if errors == 0 {
-                fmt.Printf("Found correct pair")
-            }
-            
         }
     }
 
-    sum = resolve(states, gates)
-
+    fmt.Printf("=== %v\n", strings.Join(flips, ","))
 
 	fmt.Printf(" -> Sum: %d\n", sum)
 

@@ -221,6 +221,6 @@ z43 from XOR tfg qkc
 z44 from XOR mqb spg
 z45 from OR bfj rvs
 Problem wires: [] (0)
-=== cqr,ncd,nfj,qnw,vkg,z15,z20,z37
- -> Sum: 0
+OK wires: [qkc qhn dmv vks dqg sgc mnm jrr svq wfq hvf rgm dhv rjq hvb bjg bps cgq hrn wmd ndj svk nns gmf wfg ndd jbg kgk qpc mmj dwr nbt cnd fgq rvb nfj kbb pkw hnw fdb mqp wgr mvk qkm qnb fkg tfg rjm qdg nvr dmb pgg qfj ksr dkr std vrq qnw trt gpw nps htw gsb qpk hgk mqb fhr hrb rvs tgv ptv hbt dgv qps tcw cmf pfw kdf hqv mrm hbp cqr qfb vgf sjw vdp ckw hks wpw rbr kpj chv msp fbk htn vwc swr twd bvv qdq dnt qqg mmn mdv crj dhp bfk kmn npv vct rvc jgt mng pjh qvd bmk wrb nsh fcm kfb msn kpc dbv bnw nkv rrf gfb rpn ctc ngt ncd bsd qbj rwq kbk wtp kgn ngw wgh dnn qbm jpg bbq qqr brm spg vdg wwc fgn mbt ggs psh ftc gnc tpr mjm tsp bfj gdr hqr srr gqw tmw dvm qjb hdm qrs jhf ctg vkg ctj vkh cjq pcp wvn qwb] (176)
+ -> Sum: 48370656633968
 Processing complete!
